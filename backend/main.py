@@ -5,6 +5,7 @@ from typing import List
 import logging
 
 import models, schemas, database
+from routers import ai_router
 
 models.Base.metadata.create_all(bind=database.engine)
 
@@ -17,6 +18,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── AI routes (Gemini-backed) ────────────────────────────────────────────────
+app.include_router(ai_router.router)
+
+# ── Core routes ──────────────────────────────────────────────────────────────
 
 @app.get("/")
 def read_root():
@@ -53,7 +59,3 @@ def create_relationship(rel: schemas.ConceptRelationshipCreate, db: Session = De
     db.commit()
     db.refresh(db_rel)
     return db_rel
-
-@app.post("/api/ai/chat", response_model=schemas.ChatResponse)
-def chat_with_ai(request: schemas.ChatRequest):
-    return {"response": f"I am a mock AI. You said: '{request.message}'. Mode: {request.mode}"}
