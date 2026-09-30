@@ -10,6 +10,13 @@ class ConceptBase(BaseModel):
 class ConceptCreate(ConceptBase):
     pass
 
+class ConceptUpdate(BaseModel):
+    title: Optional[str] = None
+    explanation: Optional[str] = None
+    difficulty: Optional[float] = None
+    mastery_level: Optional[float] = None
+    confidence: Optional[float] = None
+
 class Concept(ConceptBase):
     id: int
     mastery_level: float

@@ -3,7 +3,7 @@ import { Beaker, Send, Loader2, AlertTriangle, BookOpen, ChevronRight, FileText,
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
-  researchAssistant, generateLearningPath, analyzeDocument, getAIStatus,
+  researchAssistant, generateLearningPath, analyzeDocument, getAIStatus, saveDocument,
   type ResearchResponse, type LearningPathStep, type AIStatus,
 } from '../lib/api';
 
@@ -247,6 +247,9 @@ function DocumentTab() {
     try {
       const res = await analyzeDocument({ content, instruction: instruction || undefined });
       setResult(res);
+      // Auto-save document to backend so it appears in Search
+      const title = content.split('\n')[0].slice(0, 80) || 'Untitled Document';
+      saveDocument({ title, content }).catch(() => { /* non-blocking */ });
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Request failed.');
     } finally {

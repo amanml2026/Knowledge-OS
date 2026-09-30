@@ -198,3 +198,122 @@ export interface Concept {
 
 export const getConcepts = (): Promise<Concept[]> =>
   request<Concept[]>("/api/concepts/");
+
+export interface ConceptCreate {
+  title: string;
+  explanation?: string;
+  difficulty?: number;
+}
+
+export const createConcept = (data: ConceptCreate): Promise<Concept> =>
+  request<Concept>("/api/concepts/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const updateConcept = (
+  id: number,
+  updates: Partial<{ mastery_level: number; confidence: number; explanation: string; difficulty: number }>
+): Promise<Concept> =>
+  request<Concept>(`/api/concepts/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(updates),
+  });
+
+export const deleteConcept = (id: number): Promise<{ ok: boolean }> =>
+  request<{ ok: boolean }>(`/api/concepts/${id}`, { method: "DELETE" });
+
+// ─────────────────────── Progress Stats ────────────────────────────────────
+
+export interface ProgressStats {
+  total_concepts: number;
+  mastered: number;
+  learning: number;
+  weak: number;
+  avg_mastery: number;
+  open_mistakes: number;
+  corrected_mistakes: number;
+  concept_mastery: { title: string; mastery: number; difficulty: number }[];
+}
+
+export const getStats = (): Promise<ProgressStats> =>
+  request<ProgressStats>("/api/stats/");
+
+// ─────────────────────── Search ────────────────────────────────────────────
+
+export interface SearchResult {
+  type: "concept" | "document" | "mistake";
+  id: number;
+  title: string;
+  snippet: string;
+  score: number;
+  mastery?: number;
+  corrected?: boolean;
+}
+
+export interface SearchResponse {
+  results: SearchResult[];
+}
+
+export const searchAll = (q: string): Promise<SearchResponse> =>
+  request<SearchResponse>(`/api/search/?q=${encodeURIComponent(q)}`);
+
+// ─────────────────────── Mistakes CRUD ─────────────────────────────────────
+
+export interface Mistake {
+  id: number;
+  concept_id?: number;
+  question: string;
+  user_answer: string;
+  correct_reasoning: string;
+  misconception: string;
+  severity: "low" | "medium" | "high";
+  date: string;
+  corrected: boolean;
+}
+
+export interface MistakeCreate {
+  concept_id?: number;
+  question: string;
+  user_answer: string;
+  correct_reasoning: string;
+  misconception: string;
+  severity: "low" | "medium" | "high";
+}
+
+export const getMistakes = (): Promise<Mistake[]> =>
+  request<Mistake[]>("/api/mistakes/");
+
+export const createMistake = (data: MistakeCreate): Promise<Mistake> =>
+  request<Mistake>("/api/mistakes/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const markMistakeCorrected = (id: number): Promise<{ ok: boolean }> =>
+  request<{ ok: boolean }>(`/api/mistakes/${id}/correct`, { method: "PATCH" });
+
+export const deleteMistake = (id: number): Promise<{ ok: boolean }> =>
+  request<{ ok: boolean }>(`/api/mistakes/${id}`, { method: "DELETE" });
+
+// ─────────────────────── Documents CRUD ────────────────────────────────────
+
+export interface StoredDocument {
+  id: number;
+  title: string;
+  content: string;
+  upload_date: string;
+}
+
+export const getDocuments = (): Promise<StoredDocument[]> =>
+  request<StoredDocument[]>("/api/documents/");
+
+export const saveDocument = (data: { title: string; content: string }): Promise<StoredDocument> =>
+  request<StoredDocument>("/api/documents/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const deleteDocument = (id: number): Promise<{ ok: boolean }> =>
+  request<{ ok: boolean }>(`/api/documents/${id}`, { method: "DELETE" });
+

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PenTool, Loader2, CheckCircle, XCircle, ChevronRight, AlertTriangle } from 'lucide-react';
-import { generatePractice, evaluateAnswer, getAIStatus, type PracticeQuestion, type AIStatus } from '../lib/api';
+import { generatePractice, evaluateAnswer, getAIStatus, createMistake, type PracticeQuestion, type AIStatus } from '../lib/api';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 type Phase = 'setup' | 'quiz' | 'results';
@@ -70,6 +70,16 @@ export default function Practice() {
         next[currentIndex] = { ...next[currentIndex], userAnswer: draftAnswer, evaluation: result, submitted: true };
         return next;
       });
+      // Auto-save low-scoring answers as mistakes for the Progress tracker
+      if (result.score < 0.5) {
+        createMistake({
+          question: q.question,
+          user_answer: draftAnswer,
+          correct_reasoning: result.correct_reasoning || q.correct_answer,
+          misconception: result.misconceptions.join('; ') || result.feedback,
+          severity: result.score < 0.2 ? 'high' : 'medium',
+        }).catch(() => { /* non-blocking */ });
+      }
     } catch (e: unknown) {
       const errMsg = e instanceof Error ? e.message : 'Evaluation failed.';
       setAnswers(prev => {

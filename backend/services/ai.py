@@ -13,8 +13,8 @@ import os
 import json
 from dotenv import load_dotenv
 
-# Load .env if present (development convenience; production uses real env vars)
-load_dotenv()
+# Load .env if present; override=True ensures a fresh read on every (re)start
+load_dotenv(override=True)
 
 
 # ─────────────────────── Base abstraction ──────────────────────────────────
