@@ -49,29 +49,47 @@ class GeminiProvider(AIProvider):
         self._types = _types
 
     def chat(self, prompt: str, system_instruction: str = "", response_schema: dict = None) -> str:
-        try:
-            config_kwargs = {}
-            if system_instruction:
-                config_kwargs["system_instruction"] = system_instruction
-            if response_schema:
-                config_kwargs["response_mime_type"] = "application/json"
-                prompt = (
-                    prompt
-                    + f"\n\nRespond strictly as valid JSON matching this schema:\n"
-                    + json.dumps(response_schema, indent=2)
-                )
+        import time
+        import random
+        import re
+        from fastapi import HTTPException
 
-            generate_config = self._types.GenerateContentConfig(**config_kwargs) if config_kwargs else None
+        config_kwargs = {}
+        if system_instruction:
+            config_kwargs["system_instruction"] = system_instruction
+        if response_schema:
+            config_kwargs["response_mime_type"] = "application/json"
+            prompt = (
+                prompt
+                + f"\n\nRespond strictly as valid JSON matching this schema:\n"
+                + json.dumps(response_schema, indent=2)
+            )
 
-            kwargs = {"model": self.MODEL, "contents": prompt}
-            if generate_config:
-                kwargs["config"] = generate_config
+        generate_config = self._types.GenerateContentConfig(**config_kwargs) if config_kwargs else None
+        kwargs = {"model": self.MODEL, "contents": prompt}
+        if generate_config:
+            kwargs["config"] = generate_config
 
-            response = self._client.models.generate_content(**kwargs)
-            return response.text
-        except Exception as e:
-            from fastapi import HTTPException
-            raise HTTPException(status_code=503, detail=f"Gemini API Error: {str(e)}")
+        max_retries = 3
+        base_delay = 2.0
+
+        for attempt in range(max_retries + 1):
+            try:
+                response = self._client.models.generate_content(**kwargs)
+                return response.text
+            except Exception as e:
+                err_str = str(e)
+                is_transient = ("503" in err_str and "UNAVAILABLE" in err_str) or ("429" in err_str)
+                
+                if attempt < max_retries and is_transient:
+                    delay = (base_delay ** attempt) + random.uniform(0, 1)
+                    retry_match = re.search(r"'retryDelay':\s*'(\d+(\.\d+)?)s'", err_str)
+                    if retry_match:
+                        delay = max(delay, float(retry_match.group(1)))
+                    time.sleep(delay)
+                    continue
+                    
+                raise HTTPException(status_code=503, detail=f"Gemini API Error: {err_str}")
 
 
 # ─────────────────────── Factory ───────────────────────────────────────────

@@ -49,33 +49,55 @@ except Exception as e:
     print(f"❌  Client creation failed: {e}")
     sys.exit(1)
 
-# ── 4. Minimal API call ────────────────────────────────────
+import time
+import random
+import re
+
 MODEL = "gemini-3.8-flash"
-print(f"\n[4] Sending minimal test prompt to {MODEL}...")
-try:
-    response = client.models.generate_content(
-        model=MODEL,
-        contents="Reply with exactly three words: Gemini is working",
-    )
-    text = response.text.strip()
-    print(f"✅  Response received: \"{text}\"")
-    print(f"\n{'=' * 55}")
-    print("  RESULT: Gemini connectivity SUCCEEDED ✅")
-    print(f"  Model : {MODEL}")
-    print(f"  Key   : loaded (YES)")
-    print(f"{'=' * 55}")
-    sys.exit(0)
-except Exception as e:
-    err = str(e)
-    print(f"❌  API call failed: {err}")
-    if "API_KEY_INVALID" in err or "invalid" in err.lower():
-        print("\n    → The key is present but INVALID. Check it at:")
-        print("      https://aistudio.google.com/app/apikey")
-    elif "quota" in err.lower():
-        print("\n    → Quota exceeded. Check usage at Google AI Studio.")
-    elif "network" in err.lower() or "connect" in err.lower():
-        print("\n    → Network error. Check your internet connection.")
-    print(f"\n{'=' * 55}")
-    print("  RESULT: Gemini connectivity FAILED ❌")
-    print(f"{'=' * 55}")
+print(f"\n[4] Sending 3 minimal test prompts to {MODEL} with retries...")
+
+success_count = 0
+for i in range(3):
+    max_retries = 3
+    base_delay = 2.0
+    print(f"\n  -- Request {i+1}/3 --")
+    
+    for attempt in range(max_retries + 1):
+        try:
+            response = client.models.generate_content(
+                model=MODEL,
+                contents=f"Reply with exactly three words: Request {i+1} working",
+            )
+            text = response.text.strip()
+            print(f"  ✅  Response received: \"{text}\"")
+            success_count += 1
+            break
+        except Exception as e:
+            err = str(e)
+            is_transient = ("503" in err and "UNAVAILABLE" in err) or ("429" in err)
+            
+            if attempt < max_retries and is_transient:
+                delay = (base_delay ** attempt) + random.uniform(0, 1)
+                retry_match = re.search(r"'retryDelay':\s*'(\d+(\.\d+)?)s'", err)
+                if retry_match:
+                    delay = max(delay, float(retry_match.group(1)))
+                print(f"  ⏳  Attempt {attempt+1} failed ({'503 UNAVAILABLE' if '503' in err else '429 EXHAUSTED'}). Retrying in {delay:.1f}s...")
+                time.sleep(delay)
+                continue
+                
+            print(f"  ❌  API call failed on attempt {attempt+1}: {err}")
+            if "API_KEY_INVALID" in err or "invalid" in err.lower():
+                print("      → The key is present but INVALID.")
+            break
+
+print(f"\n{'=' * 55}")
+if success_count == 3:
+    print(f"  RESULT: Gemini connectivity SUCCEEDED ✅ ({success_count}/3)")
+else:
+    print(f"  RESULT: Gemini connectivity FAILED ❌ ({success_count}/3 succeeded)")
+print(f"  Model : {MODEL}")
+print(f"  Key   : loaded (YES)")
+print(f"{'=' * 55}")
+if success_count < 3:
     sys.exit(1)
+sys.exit(0)
