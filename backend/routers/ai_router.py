@@ -233,9 +233,14 @@ def generate_practice(request: PracticeRequest):
     )
     raw = ai.chat(prompt, system_instruction=system, response_schema=schema)
     try:
-        questions = json.loads(raw)
+        data = json.loads(raw)
+        if isinstance(data, dict) and "error" in data:
+            raise HTTPException(status_code=503, detail=data["error"])
+        questions = data
         if not isinstance(questions, list):
             questions = questions.get("questions", [raw])
+    except HTTPException:
+        raise
     except Exception:
         questions = [{"question": raw, "type": "short_answer", "correct_answer": "", "explanation": ""}]
     return PracticeResponse(questions=questions)

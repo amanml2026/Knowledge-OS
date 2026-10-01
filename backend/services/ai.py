@@ -40,7 +40,7 @@ class MockProvider(AIProvider):
 # ─────────────────────── Gemini (google.genai SDK) ─────────────────────────
 
 class GeminiProvider(AIProvider):
-    MODEL = "gemini-2.0-flash"   # fast, cost-efficient; swap to gemini-2.5-pro for quality
+    MODEL = "gemini-3.8-flash"
 
     def __init__(self, api_key: str):
         from google import genai as _genai
@@ -70,10 +70,8 @@ class GeminiProvider(AIProvider):
             response = self._client.models.generate_content(**kwargs)
             return response.text
         except Exception as e:
-            msg = f"[Gemini Error] {str(e)}"
-            if response_schema:
-                return json.dumps({"error": msg, "response": msg})
-            return msg
+            from fastapi import HTTPException
+            raise HTTPException(status_code=503, detail=f"Gemini API Error: {str(e)}")
 
 
 # ─────────────────────── Factory ───────────────────────────────────────────

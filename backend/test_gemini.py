@@ -50,7 +50,7 @@ except Exception as e:
     sys.exit(1)
 
 # ── 4. Minimal API call ────────────────────────────────────
-MODEL = "gemini-2.0-flash"
+MODEL = "gemini-3.8-flash"
 print(f"\n[4] Sending minimal test prompt to {MODEL}...")
 try:
     response = client.models.generate_content(
