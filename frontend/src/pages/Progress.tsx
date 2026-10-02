@@ -167,7 +167,7 @@ export default function Progress() {
                 <YAxis domain={[0, 100]} tick={{ fill: '#6B7280', fontSize: 10 }} tickLine={false} axisLine={false} />
                 <Tooltip
                   contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fff' }}
-                  formatter={(v: number) => [`${v}%`, 'Mastery']}
+                  formatter={(v: any) => [`${v}%`, 'Mastery']}
                 />
                 <Bar dataKey="mastery" radius={[4, 4, 0, 0]}>
                   {topConcepts.map((entry, i) => (
