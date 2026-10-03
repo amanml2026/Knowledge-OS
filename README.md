@@ -70,7 +70,7 @@ python test_gemini.py
 Knowledge OS is designed to be resilient. If you do not provide a `GEMINI_API_KEY`, or if your API quota is exhausted (e.g., encountering a 429 error), the application will gracefully fall back to a "Mock Mode."
 - In Mock Mode, you will receive predefined responses and alerts asking you to set your API key.
 - The application will not crash, and all non-AI functionalities (like viewing the graph and managing settings) will remain available.
-- **Note:** Users must provide their own eligible Gemini API access for full functionality.
+- **Note:** Users must provide their own eligible Gemini API access for full functionality !!
 
 ## Known Limitations and V2 Roadmap
 - **No Authentication:** V1 does not have a login system or multi-user support. All data is saved to a local SQLite database (`backend/knowledge_os.db`). Authentication is planned for V2.
